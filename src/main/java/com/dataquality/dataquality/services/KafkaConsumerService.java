@@ -1,8 +1,6 @@
 package com.dataquality.dataquality.services;
 
-import com.dataquality.dataquality.entity.TelemetryEventEntity;
 import com.dataquality.dataquality.model.TelemetryEvent;
-import com.dataquality.dataquality.repository.TelemetryRepository;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
@@ -11,14 +9,14 @@ import tools.jackson.databind.ObjectMapper;
 public class KafkaConsumerService {
 
     private final ObjectMapper objectMapper;
-    private final TelemetryRepository telemetryRepository;
+    private final TelemetryAggregationService aggregationService;
 
     public KafkaConsumerService(
             ObjectMapper objectMapper,
-            TelemetryRepository telemetryRepository
+            TelemetryAggregationService aggregationService
     ) {
         this.objectMapper = objectMapper;
-        this.telemetryRepository = telemetryRepository;
+        this.aggregationService = aggregationService;
     }
 
     @KafkaListener(
@@ -39,38 +37,7 @@ public class KafkaConsumerService {
                             TelemetryEvent.class
                     );
 
-            TelemetryEventEntity entity =
-                    new TelemetryEventEntity();
-
-            entity.setRecordId(
-                    event.getRecordId()
-            );
-
-            entity.setBatchId(
-                    event.getBatchId()
-            );
-
-            entity.setFileName(
-                    event.getFileName()
-            );
-
-            entity.setServiceName(
-                    event.getServiceName()
-            );
-
-            entity.setMetricName(
-                    event.getMetricName()
-            );
-
-            entity.setMetricValue(
-                    event.getMetricValue()
-            );
-
-            entity.setEventTimestamp(
-                    event.getEventTimestamp()
-            );
-
-            telemetryRepository.save(entity);
+            aggregationService.processTelemetry(event);
 
         } catch (Exception e) {
             e.printStackTrace();
